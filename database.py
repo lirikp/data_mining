@@ -17,21 +17,22 @@ class dbConnector():
     def load_to_db(self, post):
         session = self.SessionMaker()
         self.post = post
+
         # Проверяем автора
         id = self.check_isset_writer(session, self.post['autor'])
         if not id:
             entryWriter = models.Writer(name=self.post['autor'], url=self.post['url'])
             session.add(entryWriter)
-            session.commit()
+            session.flush()
             self.post['autor_db_id'] = entryWriter.id
         else:
             self.post['autor_db_id'] = id
 
         # Заливаем пост
-        new_post = models.Post(url=self.post['url'], img_url=self.post['img'], datetime_post=self.post['date'], writer_id=self.post['autor_db_id'])
-        session.add(new_post)
-        session.commit()
-        self.post['post_db_id'] = new_post.id
+        entryPost = models.Post(url=self.post['url'], img_url=self.post['img'], datetime_post=self.post['date'], writer_id=self.post['autor_db_id'])
+        session.add(entryPost)
+        session.flush()
+        self.post['post_db_id'] = entryPost.id
 
         #Проверяем теги, получаем иды.
         for i, tag in enumerate(self.post['list_of_tags']):
@@ -39,15 +40,15 @@ class dbConnector():
             if not id:
                 entryTag = models.Tag(name=tag['name'], url=tag['url'])
                 session.add(entryTag)
-                session.commit()
                 self.post['list_of_tags'][i]['db_id'] = self.check_isset_tag(session, tag['name'])
+
+                # Заливаем таг посты
+                entryPost.tag.append(entryTag)
+                entryTag.posts.append(entryPost)
             else:
                 self.post['list_of_tags'][i]['db_id'] = id
 
-            #Заливаем таг посты
-            new_tag_post = models.tag_post(post_id=self.post['post_db_id'], tag_id=id)
-            session.add(new_tag_post)
-            session.commit()
+            session.flush()
 
 
         #Проверяем на наличие в базе комментаторов, подрисовываем id
@@ -56,7 +57,7 @@ class dbConnector():
             if not id:
                 entryWriter = models.Writer(name=comment['writer'], url=comment['url'])
                 session.add(entryWriter)
-                session.commit()
+                session.flush()
                 self.post['comments'][i]['writer_db_id'] = self.check_isset_writer(session, comment['writer'])
             else:
                 self.post['comments'][i]['writer_db_id'] = id
@@ -64,17 +65,10 @@ class dbConnector():
 
             #Заливаем комменты
             session.add(models.Comment(datetime_comment=comment['date'], body_comment=comment['text'], writer_id=id))
+            session.flush()
 
         session.commit()
-
-
-
-
-
-        session.flush()
-        session.commit()
-        # load comments
-
+        session.close()
         print(post)
 
     def check_isset_writer(self, session, writer):
@@ -88,11 +82,6 @@ class dbConnector():
             return session.query(models.Tag).filter(models.Tag.name == tag).one().id
         else:
             return False
-
-
-    def close(self):
-        self.SessionMaker.close_all()
-
 
 if __name__ == '__main__':
     c = dbConnector()

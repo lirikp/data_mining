@@ -114,7 +114,7 @@ class geekbrainsDataMinePosts():
 
         self.db_session = db.dbConnector()
         self.db_session.load_to_db(post)
-        self.db_session.close()
+
 
 
 if __name__ == '__main__':
