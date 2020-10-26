@@ -38,6 +38,7 @@ class Post(Base):
     tag = relationship('Tag', secondary=tag_post, back_populates='posts')
 
 
+
 class Writer(Base):
     __tablename__ = 'writer'
     id = Column(Integer, autoincrement=True, primary_key=True)
@@ -60,5 +61,6 @@ class Comment(Base):
     datetime_comment = Column(DateTime, unique=False, nullable=False)
     body_comment = Column(String, unique=False, nullable=False)
     writer_id = Column(Integer, ForeignKey('writer.id'))
+    post_id = Column(Integer, ForeignKey('post.id'))
     writer = relationship("Writer", back_populates='comments')
 

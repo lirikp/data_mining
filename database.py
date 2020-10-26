@@ -64,7 +64,7 @@ class dbConnector():
             print(i)
 
             #Заливаем комменты
-            session.add(models.Comment(datetime_comment=comment['date'], body_comment=comment['text'], writer_id=id))
+            session.add(models.Comment(datetime_comment=comment['date'], body_comment=comment['text'], writer_id=id, post_id=self.post['post_db_id']))
             session.flush()
 
         session.commit()
